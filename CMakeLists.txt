@@ -12,5 +12,7 @@ set(SFML_DIR "opt/homebrew")
 
 find_package(SFML 2.5.1 COMPONENTS system window graphics audio REQUIRED)
 add_executable(Minesweeper_Clone main.cpp
+        WelcomeWindow.cpp
+        WelcomeWindow.h
 )
 target_link_libraries(Minesweeper_Clone sfml-system sfml-window sfml-graphics sfml-audio)
