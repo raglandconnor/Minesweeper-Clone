@@ -3,6 +3,7 @@
 #include <fstream>
 #include <string>
 #include "WelcomeWindow.h"
+#include "Board.h"
 
 using namespace std;
 
@@ -18,6 +19,11 @@ int main() {
 
     WelcomeWindow welcomeWindow(cols, rows);
     welcomeWindow.run();
+
+    if (!welcomeWindow.closed) {
+        Board boardWindow(cols, rows, mineCount, welcomeWindow.nameInputString);
+        boardWindow.run();
+    }
 
 //    sf::RenderWindow window(sf::VideoMode(200, 200), "SFML Works!");
 //    sf::CircleShape shape(100.f);
