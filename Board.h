@@ -100,6 +100,7 @@ private:
     // Render
     void renderTiles();
     void renderNumAdj();
+    void renderFlags();
     void render();
 
     void printCL();

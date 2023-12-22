@@ -271,6 +271,28 @@ void Board::handleEvents() {
                     }
                 }
             }
+            if (event.mouseButton.button == sf::Mouse::Right) {
+                sf::Vector2i mouse;
+                mouse = sf::Mouse::getPosition(mainWindow);
+                std::cout << "R mouse: (" << mouse.x << ", " << mouse.y << ')' << std::endl;
+
+                auto iter1 = boardVect.begin();
+                for (; iter1 != boardVect.end(); ++iter1) {
+                    auto iter2 = iter1->begin();
+                    for (; iter2 != iter1->end(); ++iter2) {
+                        if (iter2->tileSprite.getGlobalBounds().contains(mainWindow.mapPixelToCoords(mouse)) && !lose && !win && !paused) {
+                            if (!iter2->isRevealed) {
+                                iter2->flag = !iter2->flag;
+                            }
+                            if (iter2->flag) {
+                                flagsPlaced++;
+                            } else {
+                                flagsPlaced--;
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -313,11 +335,24 @@ void Board::renderNumAdj() {
     }
 }
 
+void Board::renderFlags() {
+    auto iter1 = boardVect.begin();
+    for (; iter1 != boardVect.end(); ++iter1) {
+        auto iter2 = iter1->begin();
+        for (; iter2 != iter1->end(); ++iter2) {
+            if (iter2->flag) {
+                mainWindow.draw(iter2->flagSprite);
+            }
+        }
+    }
+}
+
 void Board::render() {
     mainWindow.clear(sf::Color::White);
 
     renderTiles();
     renderNumAdj();
+    renderFlags();
 
     mainWindow.display();
 }
