@@ -19,7 +19,7 @@ Board::Board(int cols, int rows, int mineCount, std::string username) : mainWind
 
     initializeTiles();
     initializeSprites();
-//    calculateAdjacent();
+    calculateAdjacent();
 }
 
 void Board::run() {
@@ -106,6 +106,147 @@ void Board::initializeTiles() {
     setMines();
 }
 
+void Board::calculateAdjacent() {
+/*
+     * Code added to the array in this order:
+     * [0, 1, 2]
+     * [3, -, 4]
+     * [5, 6, 7]
+*/
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            if (!boardVect[i][j].mine) {
+                boardVect[i][j].numAdjacentMines = 0;
+                if ((i - 1) >= 0 && (j - 1) >= 0) {  // 0
+                    boardVect[i][j].adjacentTiles[0] = &boardVect[i-1][j-1];
+                    if (boardVect[i-1][j-1].mine) {
+                        boardVect[i][j].numAdjacentMines++;
+                    }
+                } else {
+                    boardVect[i][j].adjacentTiles[0] = nullptr;
+                }
+
+                if ((i - 1) >= 0) {  // 1
+                    boardVect[i][j].adjacentTiles[1] = &boardVect[i-1][j];
+                    if (boardVect[i-1][j].mine) {
+                        boardVect[i][j].numAdjacentMines++;
+                    }
+                } else {
+                    boardVect[i][j].adjacentTiles[1] = nullptr;
+                }
+
+                if ((i - 1) >= 0 && (j + 1) < cols) {  // 2
+                    boardVect[i][j].adjacentTiles[2] = &boardVect[i-1][j+1];
+                    if (boardVect[i-1][j+1].mine) {
+                        boardVect[i][j].numAdjacentMines++;
+                    }
+                } else {
+                    boardVect[i][j].adjacentTiles[2] = nullptr;
+                }
+
+                if ((j - 1) >= 0) {  // 3
+                    boardVect[i][j].adjacentTiles[3] = &boardVect[i][j-1];
+                    if (boardVect[i][j-1].mine) {
+                        boardVect[i][j].numAdjacentMines++;
+                    }
+                } else {
+                    boardVect[i][j].adjacentTiles[3] = nullptr;
+                }
+
+                if ((j + 1) < cols) {  // 4
+                    boardVect[i][j].adjacentTiles[4] = &boardVect[i][j+1];
+                    if (boardVect[i][j+1].mine) {
+                        boardVect[i][j].numAdjacentMines++;
+                    }
+                } else {
+                    boardVect[i][j].adjacentTiles[4] = nullptr;
+                }
+
+                if ((i + 1) < rows && (j - 1) >= 0) {  // 5
+                    boardVect[i][j].adjacentTiles[5] = &boardVect[i+1][j-1];
+                    if (boardVect[i+1][j-1].mine) {
+                        boardVect[i][j].numAdjacentMines++;
+                    }
+                } else {
+                    boardVect[i][j].adjacentTiles[5] = nullptr;
+                }
+
+                if ((i + 1) < rows) {  // 6
+                    boardVect[i][j].adjacentTiles[6] = &boardVect[i+1][j];
+                    if (boardVect[i+1][j].mine) {
+                        boardVect[i][j].numAdjacentMines++;
+                    }
+                } else {
+                    boardVect[i][j].adjacentTiles[6] = nullptr;
+                }
+
+                if ((i + 1) < rows && (j + 1) < cols) {  // 7
+                    boardVect[i][j].adjacentTiles[7] = &boardVect[i+1][j+1];
+                    if (boardVect[i+1][j+1].mine) {
+                        boardVect[i][j].numAdjacentMines++;
+                    }
+                } else {
+                    boardVect[i][j].adjacentTiles[7] = nullptr;
+                }
+            }
+
+        }
+    }
+    auto iter3 = boardVect.begin();
+    for (; iter3 != boardVect.end(); ++iter3) {
+        auto iter4 = iter3->begin();
+        for (; iter4 != iter3->end(); ++iter4) {
+            if (iter4->numAdjacentMines == 1) {
+                iter4->numSprite.setTexture(num_1_texture);
+            }
+            if (iter4->numAdjacentMines == 2) {
+                iter4->numSprite.setTexture(num_2_texture);
+            }
+            if (iter4->numAdjacentMines == 3) {
+                iter4->numSprite.setTexture(num_3_texture);
+            }
+            if (iter4->numAdjacentMines == 4) {
+                iter4->numSprite.setTexture(num_4_texture);
+            }
+            if (iter4->numAdjacentMines == 5) {
+                iter4->numSprite.setTexture(num_5_texture);
+            }
+            if (iter4->numAdjacentMines == 6) {
+                iter4->numSprite.setTexture(num_6_texture);
+            }
+            if (iter4->numAdjacentMines == 7) {
+                iter4->numSprite.setTexture(num_7_texture);
+            }
+            if (iter4->numAdjacentMines == 8) {
+                iter4->numSprite.setTexture(num_8_texture);
+            }
+        }
+    }
+}
+
+void Board::revealRecursive(Tile *tile) {
+    if (tile->isRevealed || tile->flag) {return;}
+    if (tile->mine) {
+        tile->tileSprite.setTexture(revealedTexture);
+        tile->mineSprite.setTexture(mineTexture);
+        tile->isRevealed = true;
+        lose = true;
+        paused = true;
+//        paused_time = paused_time + elapsed_time;  // TODO: implement timer
+        return;
+    }
+    tile->tileSprite.setTexture(revealedTexture);
+    tile->isRevealed = true;
+
+    if (tile->numAdjacentMines == 0) {
+        for (int i = 0; i < 8; i++) {
+            if (tile->adjacentTiles[i] != nullptr) {
+                revealRecursive(tile->adjacentTiles[i]);
+            }
+        }
+    }
+}
+
 void Board::handleEvents() {
     sf::Event event;
     while(mainWindow.pollEvent(event)) {
@@ -125,9 +266,7 @@ void Board::handleEvents() {
                     auto iter2 = iter1->begin();
                     for (; iter2 != iter1->end(); ++iter2) {
                         if (iter2->tileSprite.getGlobalBounds().contains(mainWindow.mapPixelToCoords(mouse)) && !lose && !win && !paused) {
-                            iter2->isRevealed = true;
-                            iter2->tileSprite.setTexture(revealedTexture);
-                            // TODO: implement recursive reveal function.
+                            revealRecursive(&(*iter2));
                         }
                     }
                 }
@@ -160,10 +299,25 @@ void Board::renderTiles() {
     }
 }
 
+void Board::renderNumAdj() {
+    if (win || lose || !paused) {
+        auto iter7 = boardVect.begin();
+        for (; iter7 != boardVect.end(); ++iter7) {
+            auto iter8 = iter7->begin();
+            for (; iter8 != iter7->end(); ++iter8) {
+                if (iter8->isRevealed) {
+                    mainWindow.draw(iter8->numSprite);
+                }
+            }
+        }
+    }
+}
+
 void Board::render() {
     mainWindow.clear(sf::Color::White);
 
     renderTiles();
+    renderNumAdj();
 
     mainWindow.display();
 }

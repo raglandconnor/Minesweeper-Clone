@@ -90,13 +90,16 @@ private:
     void initializeSprites();
     void setMines();
     void initializeTiles();
+    void calculateAdjacent();
 
+    void revealRecursive(Tile* tile);
     void handleEvents();
 //
 //    void update();
 
     // Render
     void renderTiles();
+    void renderNumAdj();
     void render();
 
     void printCL();
