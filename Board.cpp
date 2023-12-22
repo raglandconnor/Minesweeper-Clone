@@ -361,7 +361,7 @@ void Board::updateCounter() {
             counter_3_sprite.setTextureRect(sf::IntRect(21 * i, 0, 21, 32));
         }
     }
-}
+}  // TODO: Make code more concise
 
 void Board::updateTimer() {
     /*
@@ -400,9 +400,61 @@ void Board::updateTimer() {
             timer_4_sprite.setTextureRect(sf::IntRect(21 * i, 0, 21, 32));
         }
     }
+}  // TODO: Make code more concise
+
+void Board::checkWin() {
+    if (!win) {
+        int numRevealed = 0;
+        auto iter1 = boardVect.begin();
+        for (; iter1 != boardVect.end(); ++iter1) {
+            auto iter2 = iter1->begin();
+            for (; iter2 != iter1->end(); ++iter2) {
+                if (iter2->isRevealed) {
+                    numRevealed++;
+                }
+            }
+        }
+
+        if (numRevealed == ((cols * rows) - mineCount)) {
+            auto iter3 = boardVect.begin();
+            for (; iter3 != boardVect.end(); ++iter3) {
+                auto iter4 = iter3->begin();
+                for (; iter4 != iter3->end(); ++iter4) {
+                    if (iter4->mine && !iter4->flag) {
+                        iter4->flag = true;
+                        flagsPlaced++;
+                    }
+                }
+            }
+            win = true;
+            paused = true;
+            pauseGame();
+//            updateLeaderboard(elapsed_time.asSeconds(), username);
+            faceSprite.setTexture(winFaceTexture);
+        }
+    }
+}  // TODO: add leaderboard functionality
+
+void Board::checkLose() {
+    if (lose) {
+        auto iter1 = boardVect.begin();
+        for (; iter1 != boardVect.end(); ++iter1) {
+            auto iter2 = iter1->begin();
+            for (; iter2 != iter1->end(); ++iter2) {
+                if (iter2->mine) {
+                    iter2->tileSprite.setTexture(revealedTexture);
+                }
+            }
+        }
+        showMines = true;
+        faceSprite.setTexture(sadFaceTexture);
+    }
 }
 
 void Board::update() {
+    checkWin();
+    checkLose();
+
     updateCounter();
     updateTimer();
 }
@@ -453,6 +505,17 @@ void Board::renderFlags() {
             for (; iter2 != iter1->end(); ++iter2) {
                 if (iter2->flag) {
                     mainWindow.draw(iter2->flagSprite);
+                }
+            }
+        }
+    }
+    if (win) {
+        auto iter3 = boardVect.begin();
+        for (; iter3 != boardVect.end(); ++iter3) {
+            auto iter4 = iter3->begin();
+            for (; iter4 != iter3->end(); ++iter4) {
+                if (iter4->mine) {
+                    mainWindow.draw(iter4->flagSprite);
                 }
             }
         }

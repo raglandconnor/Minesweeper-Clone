@@ -87,17 +87,22 @@ private:
     bool revealTiles;
     bool showMines;  // Debug button
 
+    // Initialize
     void initializeSprites();
     void setMines();
     void initializeTiles();
     void calculateAdjacent();
 
+    // Event handler
     void revealRecursive(Tile* tile);
     void pauseGame();
     void handleEvents();
 
+    // Update
     void updateCounter();
     void updateTimer();
+    void checkWin();
+    void checkLose();
     void update();
 
     // Render
