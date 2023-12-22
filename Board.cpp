@@ -15,7 +15,7 @@ Board::Board(int cols, int rows, int mineCount, std::string username) : mainWind
     flagsPlaced = 0;
     win = false;
     paused = false;
-//    paused_time = clock.getElapsedTime();
+    paused_time = clock.getElapsedTime();
 
     initializeTiles();
     initializeSprites();
@@ -26,7 +26,7 @@ void Board::run() {
     printCL();
     while (mainWindow.isOpen()) {
         handleEvents();
-//        update();
+        update();
         render();
     }
 }
@@ -232,7 +232,7 @@ void Board::revealRecursive(Tile *tile) {
         tile->isRevealed = true;
         lose = true;
         paused = true;
-//        paused_time = paused_time + elapsed_time;  // TODO: implement timer
+        paused_time = paused_time + elapsed_time;
         return;
     }
     tile->tileSprite.setTexture(revealedTexture);
@@ -245,6 +245,11 @@ void Board::revealRecursive(Tile *tile) {
             }
         }
     }
+}
+
+void Board::pauseGame() {
+    playPauseSprite.setTexture(playTexture);
+    paused_time += clock.getElapsedTime();
 }
 
 void Board::handleEvents() {
@@ -261,6 +266,26 @@ void Board::handleEvents() {
                 mouse = sf::Mouse::getPosition(mainWindow);
                 std::cout << "L mouse: (" << mouse.x << ", " << mouse.y << ')' << std::endl;
 
+                // Debug button
+                if (debugSprite.getGlobalBounds().contains(mainWindow.mapPixelToCoords(mouse)) && !lose && !win && !paused) {
+                    showMines = !showMines;
+                }
+                // Play pause button
+                if (playPauseSprite.getGlobalBounds().contains(mainWindow.mapPixelToCoords(mouse)) && !lose && !win) {
+                    paused = !paused;
+                    if (paused) {
+                        revealTiles = true;
+                        pauseGame();
+
+                    } else {
+                        playPauseSprite.setTexture(pauseTexture);
+                        clock.restart();
+                        revealTiles = false;
+                    }
+
+                }
+
+                // Tiles
                 auto iter1 = boardVect.begin();
                 for (; iter1 != boardVect.end(); ++iter1) {
                     auto iter2 = iter1->begin();
@@ -276,6 +301,7 @@ void Board::handleEvents() {
                 mouse = sf::Mouse::getPosition(mainWindow);
                 std::cout << "R mouse: (" << mouse.x << ", " << mouse.y << ')' << std::endl;
 
+                // Place flag
                 auto iter1 = boardVect.begin();
                 for (; iter1 != boardVect.end(); ++iter1) {
                     auto iter2 = iter1->begin();
@@ -285,9 +311,13 @@ void Board::handleEvents() {
                                 iter2->flag = !iter2->flag;
                             }
                             if (iter2->flag) {
-                                flagsPlaced++;
+                                if (!iter2->isRevealed) {
+                                    flagsPlaced++;
+                                }
                             } else {
-                                flagsPlaced--;
+                                if (!iter2->isRevealed) {
+                                    flagsPlaced--;
+                                }
                             }
                         }
                     }
@@ -295,6 +325,86 @@ void Board::handleEvents() {
             }
         }
     }
+}
+
+void Board::updateCounter() {
+    /*
+     * Order of the counter sprites:
+     * [1, 2, 3]
+     */
+    int counter = 0;
+    bool isNeg = false;
+    counter = mineCount - flagsPlaced;
+    if (counter < 0) {
+        isNeg = true;
+        counter *= -1;
+    }
+    int firstDigit = counter / 10;
+    int secondDigit = counter % 10;
+    if (win) {
+        firstDigit = 0;
+        secondDigit = 0;
+    }
+
+    // Set texture rects
+    if (isNeg) {
+        counter_1_sprite.setTextureRect(sf::IntRect(210, 0, 21, 32));
+    } else {
+        counter_1_sprite.setTextureRect(sf::IntRect(0, 0, 21, 32));
+    }
+    // Update digits
+    for (int i = 0; i < 10; i++) {
+        if (firstDigit == i) {
+            counter_2_sprite.setTextureRect(sf::IntRect(21 * i, 0, 21, 32));
+        }
+        if (secondDigit == i) {
+            counter_3_sprite.setTextureRect(sf::IntRect(21 * i, 0, 21, 32));
+        }
+    }
+}
+
+void Board::updateTimer() {
+    /*
+     * Timer layout:
+     * [1 2 | 3 4]
+     */
+    int time;
+
+    if (!paused) {
+        elapsed_time = paused_time + clock.getElapsedTime();
+        time = elapsed_time.asSeconds();
+    }
+    if (paused) {
+        time = paused_time.asSeconds();
+    }
+
+    int minutes = time / 60;
+    int seconds = time % 60;
+
+    int minutes0 = minutes / 10 % 10; //minutes index 0
+    int minutes1 = minutes % 10; // minutes index 1
+    int seconds0 = seconds / 10 % 10; // seconds index 0
+    int seconds1 = seconds % 10; // seconds index 1
+
+    for (int i = 0; i < 10; i++) {
+        if (minutes0 == i) {
+            timer_1_sprite.setTextureRect(sf::IntRect(21 * i, 0, 21, 32));
+        }
+        if (minutes1 == i) {
+            timer_2_sprite.setTextureRect(sf::IntRect(21 * i, 0, 21, 32));
+        }
+        if (seconds0 == i) {
+            timer_3_sprite.setTextureRect(sf::IntRect(21 * i, 0, 21, 32));
+        }
+        if (seconds1 == i) {
+            timer_4_sprite.setTextureRect(sf::IntRect(21 * i, 0, 21, 32));
+        }
+    }
+}
+
+void Board::update() {
+    updateCounter();
+    updateTimer();
 }
 
 void Board::renderTiles() {
@@ -336,12 +446,46 @@ void Board::renderNumAdj() {
 }
 
 void Board::renderFlags() {
-    auto iter1 = boardVect.begin();
-    for (; iter1 != boardVect.end(); ++iter1) {
-        auto iter2 = iter1->begin();
-        for (; iter2 != iter1->end(); ++iter2) {
-            if (iter2->flag) {
-                mainWindow.draw(iter2->flagSprite);
+    if (!paused) {
+        auto iter1 = boardVect.begin();
+        for (; iter1 != boardVect.end(); ++iter1) {
+            auto iter2 = iter1->begin();
+            for (; iter2 != iter1->end(); ++iter2) {
+                if (iter2->flag) {
+                    mainWindow.draw(iter2->flagSprite);
+                }
+            }
+        }
+    }
+}
+
+void Board::renderUI() {
+    mainWindow.draw(debugSprite);
+    mainWindow.draw(faceSprite);
+    mainWindow.draw(leaderboardSprite);
+    mainWindow.draw(playPauseSprite);
+
+    // Draw counter
+    mainWindow.draw(counter_1_sprite);
+    mainWindow.draw(counter_2_sprite);
+    mainWindow.draw(counter_3_sprite);
+
+    // Draw timer
+    mainWindow.draw(timer_1_sprite);
+    mainWindow.draw(timer_2_sprite);
+    mainWindow.draw(timer_3_sprite);
+    mainWindow.draw(timer_4_sprite);
+}
+
+void Board::renderDebug() {
+    if (showMines) {
+        auto iter5 = boardVect.begin();
+        for (; iter5 != boardVect.end(); ++iter5) {
+            auto iter6 = iter5->begin();
+            for (; iter6 != iter5->end(); ++iter6) {
+                if (iter6->mine) {
+                    mainWindow.draw(iter6->mineSprite);
+                }
             }
         }
     }
@@ -353,6 +497,8 @@ void Board::render() {
     renderTiles();
     renderNumAdj();
     renderFlags();
+    renderUI();
+    renderDebug();
 
     mainWindow.display();
 }

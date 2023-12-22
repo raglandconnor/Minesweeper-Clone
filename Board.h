@@ -93,14 +93,19 @@ private:
     void calculateAdjacent();
 
     void revealRecursive(Tile* tile);
+    void pauseGame();
     void handleEvents();
-//
-//    void update();
+
+    void updateCounter();
+    void updateTimer();
+    void update();
 
     // Render
     void renderTiles();
     void renderNumAdj();
     void renderFlags();
+    void renderUI();
+    void renderDebug();
     void render();
 
     void printCL();
