@@ -252,6 +252,79 @@ void Board::pauseGame() {
     paused_time += clock.getElapsedTime();
 }
 
+void Board::resetGame() {
+    win = false;
+    lose = false;
+    showMines = false;
+    revealTiles = false;
+    flagsPlaced = 0;
+    minesPlaced = 0;
+    newScoreIdx = 99;
+    paused = false;
+    playPauseSprite.setTexture(pauseTexture);
+    paused_time = sf::seconds(0);
+    elapsed_time = sf::seconds(0);
+    clock.restart();
+    boardVect.clear();
+
+    initializeTiles();
+
+    calculateAdjacent();
+    faceSprite.setTexture(happyFaceTexture);
+}
+
+void Board::eventDebug() {
+    showMines = !showMines;
+}
+
+void Board::eventPlayPause() {
+    paused = !paused;
+    if (paused) {
+        revealTiles = true;
+        pauseGame();
+
+    } else {
+        playPauseSprite.setTexture(pauseTexture);
+        clock.restart();
+        revealTiles = false;
+    }
+}
+
+void Board::eventRevealTiles(sf::Vector2i mouse) {
+    auto iter1 = boardVect.begin();
+    for (; iter1 != boardVect.end(); ++iter1) {
+        auto iter2 = iter1->begin();
+        for (; iter2 != iter1->end(); ++iter2) {
+            if (iter2->tileSprite.getGlobalBounds().contains(mainWindow.mapPixelToCoords(mouse)) && !lose && !win && !paused) {
+                revealRecursive(&(*iter2));
+            }
+        }
+    }
+}
+
+void Board::eventPlaceFlag(sf::Vector2i mouse) {
+    auto iter1 = boardVect.begin();
+    for (; iter1 != boardVect.end(); ++iter1) {
+        auto iter2 = iter1->begin();
+        for (; iter2 != iter1->end(); ++iter2) {
+            if (iter2->tileSprite.getGlobalBounds().contains(mainWindow.mapPixelToCoords(mouse)) && !lose && !win && !paused) {
+                if (!iter2->isRevealed) {
+                    iter2->flag = !iter2->flag;
+                }
+                if (iter2->flag) {
+                    if (!iter2->isRevealed) {
+                        flagsPlaced++;
+                    }
+                } else {
+                    if (!iter2->isRevealed) {
+                        flagsPlaced--;
+                    }
+                }
+            }
+        }
+    }
+}
+
 void Board::handleEvents() {
     sf::Event event;
     while(mainWindow.pollEvent(event)) {
@@ -268,33 +341,18 @@ void Board::handleEvents() {
 
                 // Debug button
                 if (debugSprite.getGlobalBounds().contains(mainWindow.mapPixelToCoords(mouse)) && !lose && !win && !paused) {
-                    showMines = !showMines;
+                    eventDebug();
                 }
                 // Play pause button
                 if (playPauseSprite.getGlobalBounds().contains(mainWindow.mapPixelToCoords(mouse)) && !lose && !win) {
-                    paused = !paused;
-                    if (paused) {
-                        revealTiles = true;
-                        pauseGame();
-
-                    } else {
-                        playPauseSprite.setTexture(pauseTexture);
-                        clock.restart();
-                        revealTiles = false;
-                    }
-
+                   eventPlayPause();
                 }
-
+                // Reset button
+                if (faceSprite.getGlobalBounds().contains(mainWindow.mapPixelToCoords(mouse))) {
+                    resetGame();
+                }
                 // Tiles
-                auto iter1 = boardVect.begin();
-                for (; iter1 != boardVect.end(); ++iter1) {
-                    auto iter2 = iter1->begin();
-                    for (; iter2 != iter1->end(); ++iter2) {
-                        if (iter2->tileSprite.getGlobalBounds().contains(mainWindow.mapPixelToCoords(mouse)) && !lose && !win && !paused) {
-                            revealRecursive(&(*iter2));
-                        }
-                    }
-                }
+                eventRevealTiles(mouse);
             }
             if (event.mouseButton.button == sf::Mouse::Right) {
                 sf::Vector2i mouse;
@@ -302,26 +360,7 @@ void Board::handleEvents() {
                 std::cout << "R mouse: (" << mouse.x << ", " << mouse.y << ')' << std::endl;
 
                 // Place flag
-                auto iter1 = boardVect.begin();
-                for (; iter1 != boardVect.end(); ++iter1) {
-                    auto iter2 = iter1->begin();
-                    for (; iter2 != iter1->end(); ++iter2) {
-                        if (iter2->tileSprite.getGlobalBounds().contains(mainWindow.mapPixelToCoords(mouse)) && !lose && !win && !paused) {
-                            if (!iter2->isRevealed) {
-                                iter2->flag = !iter2->flag;
-                            }
-                            if (iter2->flag) {
-                                if (!iter2->isRevealed) {
-                                    flagsPlaced++;
-                                }
-                            } else {
-                                if (!iter2->isRevealed) {
-                                    flagsPlaced--;
-                                }
-                            }
-                        }
-                    }
-                }
+                eventPlaceFlag(mouse);
             }
         }
     }
@@ -427,6 +466,7 @@ void Board::checkWin() {
                 }
             }
             win = true;
+            showMines = false;
             paused = true;
             pauseGame();
 //            updateLeaderboard(elapsed_time.asSeconds(), username);
@@ -541,7 +581,7 @@ void Board::renderUI() {
 }
 
 void Board::renderDebug() {
-    if (showMines) {
+    if (showMines && !paused) {
         auto iter5 = boardVect.begin();
         for (; iter5 != boardVect.end(); ++iter5) {
             auto iter6 = iter5->begin();

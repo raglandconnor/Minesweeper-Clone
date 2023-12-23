@@ -96,6 +96,11 @@ private:
     // Event handler
     void revealRecursive(Tile* tile);
     void pauseGame();
+    void resetGame();
+    void eventDebug();
+    void eventPlayPause();
+    void eventRevealTiles(sf::Vector2i mouse);
+    void eventPlaceFlag(sf::Vector2i mouse);
     void handleEvents();
 
     // Update

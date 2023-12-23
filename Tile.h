@@ -23,7 +23,7 @@ public:
     void setPos(int height, int width, int cols, int rows);
 
     bool isRevealed;
-    bool mine;
+    bool mine = false;
     bool flag;
 
     int numAdjacentMines;
