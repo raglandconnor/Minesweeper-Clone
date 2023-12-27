@@ -115,7 +115,7 @@ private:
     void renderNumAdj();
     void renderFlags();
     void renderUI();
-    void renderDebug();
+    void renderMines();
     void render();
 
     void printCL();

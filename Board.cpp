@@ -227,9 +227,6 @@ void Board::calculateAdjacent() {
 void Board::revealRecursive(Tile *tile) {
     if (tile->isRevealed || tile->flag) {return;}
     if (tile->mine) {
-        tile->tileSprite.setTexture(revealedTexture);
-        tile->mineSprite.setTexture(mineTexture);
-        tile->isRevealed = true;
         lose = true;
         paused = true;
         paused_time = paused_time + elapsed_time;
@@ -339,20 +336,26 @@ void Board::handleEvents() {
                 mouse = sf::Mouse::getPosition(mainWindow);
                 std::cout << "L mouse: (" << mouse.x << ", " << mouse.y << ')' << std::endl;
 
-                // Debug button
-                if (debugSprite.getGlobalBounds().contains(mainWindow.mapPixelToCoords(mouse)) && !lose && !win && !paused) {
-                    eventDebug();
-                }
-                // Play pause button
-                if (playPauseSprite.getGlobalBounds().contains(mainWindow.mapPixelToCoords(mouse)) && !lose && !win) {
-                   eventPlayPause();
-                }
+                // Tiles
+                eventRevealTiles(mouse);
+
                 // Reset button
                 if (faceSprite.getGlobalBounds().contains(mainWindow.mapPixelToCoords(mouse))) {
                     resetGame();
                 }
-                // Tiles
-                eventRevealTiles(mouse);
+
+                // Debug button
+                if (debugSprite.getGlobalBounds().contains(mainWindow.mapPixelToCoords(mouse)) && !lose && !win && !paused) {
+                    eventDebug();
+                }
+
+                // Play pause button
+                if (playPauseSprite.getGlobalBounds().contains(mainWindow.mapPixelToCoords(mouse)) && !lose && !win) {
+                   eventPlayPause();
+                }
+
+                // Leaderboard
+
             }
             if (event.mouseButton.button == sf::Mouse::Right) {
                 sf::Vector2i mouse;
@@ -580,14 +583,15 @@ void Board::renderUI() {
     mainWindow.draw(timer_4_sprite);
 }
 
-void Board::renderDebug() {
-    if (showMines && !paused) {
+void Board::renderMines() {
+    if (showMines && !paused || showMines && lose) {
         auto iter5 = boardVect.begin();
         for (; iter5 != boardVect.end(); ++iter5) {
             auto iter6 = iter5->begin();
             for (; iter6 != iter5->end(); ++iter6) {
                 if (iter6->mine) {
                     mainWindow.draw(iter6->mineSprite);
+                    cout << "Mine drawn" << endl;
                 }
             }
         }
@@ -601,7 +605,7 @@ void Board::render() {
     renderNumAdj();
     renderFlags();
     renderUI();
-    renderDebug();
+    renderMines();
 
     mainWindow.display();
 }
