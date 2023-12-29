@@ -101,11 +101,13 @@ private:
     void eventPlayPause();
     void eventRevealTiles(sf::Vector2i mouse);
     void eventPlaceFlag(sf::Vector2i mouse);
+    void eventLeaderboard();
     void handleEvents();
 
     // Update
     void updateCounter();
     void updateTimer();
+    void updateLeaderboard(int winningTimeSeconds, string winningName);
     void checkWin();
     void checkLose();
     void update();

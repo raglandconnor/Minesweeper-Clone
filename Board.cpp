@@ -3,6 +3,11 @@
 //
 
 #include "Board.h"
+#include <unordered_map>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include "LeaderboardWindow.h"
 
 Board::Board(int cols, int rows, int mineCount, std::string username) : mainWindow(sf::VideoMode(cols * 32, (rows * 32) + 100), "Main Window") {
     this->cols = cols;
@@ -322,6 +327,40 @@ void Board::eventPlaceFlag(sf::Vector2i mouse) {
     }
 }
 
+void Board::eventLeaderboard() {
+    bool originallyPaused = false;
+    if (paused) {
+        originallyPaused = true;
+    }
+    std::cout << "Opening leaderboard..." << std::endl;
+    playPauseSprite.setTexture(playTexture);
+    if (!originallyPaused) {
+        paused_time += clock.getElapsedTime();
+    }
+    revealTiles = true;
+    render();
+    LeaderboardWindow leaderboard(cols, rows, newScoreIdx);
+    leaderboard.run();
+    if (originallyPaused) {
+        paused = true;
+    } else {
+        paused = false;
+    }
+    if (!paused) {
+        playPauseSprite.setTexture(pauseTexture);
+        clock.restart();
+        revealTiles = false;
+    } else {  // are paused
+        if (win || lose) {
+            revealTiles = false;
+            paused = true;
+        } else {
+            revealTiles = true;
+            paused = true;
+        }
+    }
+}
+
 void Board::handleEvents() {
     sf::Event event;
     while(mainWindow.pollEvent(event)) {
@@ -355,6 +394,9 @@ void Board::handleEvents() {
                 }
 
                 // Leaderboard
+                if (leaderboardSprite.getGlobalBounds().contains(mainWindow.mapPixelToCoords(mouse))) {
+                    eventLeaderboard();
+                }
 
             }
             if (event.mouseButton.button == sf::Mouse::Right) {
@@ -444,6 +486,119 @@ void Board::updateTimer() {
     }
 }  // TODO: Make code more concise
 
+void Board::updateLeaderboard(int winningTimeSeconds, std::string winningName) {
+    vector<string> times;
+    vector<int> timesSeconds;
+    vector<string> names;
+    vector<string> updatedTimesStrings;
+
+//     Open leaderboard.txt
+    std::fstream file("leaderboard.txt");
+    if (file.is_open()) {
+        for (int i = 0; i < 5; i++) {
+            std::string str1;
+            getline(file, str1, ',');
+            times.push_back(str1);
+            std::string str2;
+            getline(file, str2);
+            names.push_back(str2);
+        }
+        file.close();
+    }
+    else {
+        std::cout << "Unable to open file" << std::endl;
+    }
+
+    // Convert times to seconds
+    for (int k = 0; k < 5; k++) {
+        int minutes_in_seconds;
+        int seconds;
+        int total_time;
+        string parsed;
+
+        std::stringstream ss(times[k]);
+        getline(ss, parsed, ':');
+        minutes_in_seconds = 60 * stoi(parsed);
+        getline(ss, parsed);
+        seconds = stoi(parsed);
+
+        total_time = minutes_in_seconds + seconds;
+
+        timesSeconds.push_back(total_time);
+    }
+
+    // Get highest time in top 5
+    int highest = timesSeconds[0];
+    int idxHighest = 0;
+    for (int l = 0; l < 5; l++) {
+        if (highest < timesSeconds[l]) {
+            highest = timesSeconds[l];
+            idxHighest = l;
+        }
+    }
+
+    // Check if winning time is top 5
+    if (winningTimeSeconds <= highest) {
+        timesSeconds[4] = winningTimeSeconds;
+        names[4] = winningName;
+    }
+
+    // Re sort
+    int n = timesSeconds.size();
+    for (int x = 0; x < n - 1; ++x) {
+        int min_index = x;
+        for (int y = x + 1; y < n; ++y) {
+            if (timesSeconds[y] < timesSeconds[min_index]) {
+                min_index = y;
+            }
+        }
+        std::swap(timesSeconds[x], timesSeconds[min_index]);
+        std::swap(names[x], names[min_index]);
+    }
+
+    // Convert seconds to 00:00
+    for (int b = 0; b < 5; b++) {
+        string result;
+        int minutes = timesSeconds[b] / 60;
+        int seconds = timesSeconds[b] % 60;
+
+        string minutes_string;
+        string seconds_string;
+
+        if (minutes < 10) {
+            minutes_string = '0' + to_string(minutes);
+        } else {
+            minutes_string = to_string(minutes);
+        }
+        if (seconds < 10) {
+            seconds_string = '0' + to_string(seconds);
+        } else {
+            seconds_string = to_string(seconds);
+        }
+
+        result = minutes_string + ':' + seconds_string;
+        updatedTimesStrings.push_back(result);
+    }
+
+    // Truncate the old file and write the information
+
+    ofstream newFile("leaderboard.txt", ios::trunc);
+    if (!newFile) {
+        std::cout << "newFile did not open" << std::endl;
+    }
+    for (int h = 0; h < 5; h++) {
+        newFile << updatedTimesStrings[h] << ',' << names[h] << std::endl;
+    }
+
+    newFile.close();
+    for (int u = 0; u < 5; u++) {
+        if (names[u] == username && winningTimeSeconds <= timesSeconds[u]) {
+            newScoreIdx = u;
+            break;
+        }
+    }
+}
+
 void Board::checkWin() {
     if (!win) {
         int numRevealed = 0;
@@ -472,11 +627,11 @@ void Board::checkWin() {
             showMines = false;
             paused = true;
             pauseGame();
-//            updateLeaderboard(elapsed_time.asSeconds(), username);
+            updateLeaderboard(elapsed_time.asSeconds(), username);
             faceSprite.setTexture(winFaceTexture);
         }
     }
-}  // TODO: add leaderboard functionality
+}
 
 void Board::checkLose() {
     if (lose) {
@@ -491,6 +646,7 @@ void Board::checkLose() {
         }
         showMines = true;
         faceSprite.setTexture(sadFaceTexture);
+        playPauseSprite.setTexture(playTexture);
     }
 }
 
@@ -527,7 +683,7 @@ void Board::renderTiles() {
 }
 
 void Board::renderNumAdj() {
-    if (win || lose || !paused) {
+    if (win && !revealTiles || lose && !revealTiles || !paused && !revealTiles) {
         auto iter7 = boardVect.begin();
         for (; iter7 != boardVect.end(); ++iter7) {
             auto iter8 = iter7->begin();
@@ -541,7 +697,7 @@ void Board::renderNumAdj() {
 }
 
 void Board::renderFlags() {
-    if (!paused) {
+    if (!paused && !revealTiles) {
         auto iter1 = boardVect.begin();
         for (; iter1 != boardVect.end(); ++iter1) {
             auto iter2 = iter1->begin();
@@ -552,7 +708,7 @@ void Board::renderFlags() {
             }
         }
     }
-    if (win) {
+    if (win && !revealTiles) {
         auto iter3 = boardVect.begin();
         for (; iter3 != boardVect.end(); ++iter3) {
             auto iter4 = iter3->begin();
@@ -584,14 +740,13 @@ void Board::renderUI() {
 }
 
 void Board::renderMines() {
-    if (showMines && !paused || showMines && lose) {
+    if (showMines && !paused && !revealTiles || showMines && lose && !revealTiles) {
         auto iter5 = boardVect.begin();
         for (; iter5 != boardVect.end(); ++iter5) {
             auto iter6 = iter5->begin();
             for (; iter6 != iter5->end(); ++iter6) {
                 if (iter6->mine) {
                     mainWindow.draw(iter6->mineSprite);
-                    cout << "Mine drawn" << endl;
                 }
             }
         }

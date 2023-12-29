@@ -20,5 +20,7 @@ add_executable(Minesweeper_Clone main.cpp
         TextureManager.h
         Tile.cpp
         Tile.h
+        LeaderboardWindow.cpp
+        LeaderboardWindow.h
 )
 target_link_libraries(Minesweeper_Clone sfml-system sfml-window sfml-graphics sfml-audio)
