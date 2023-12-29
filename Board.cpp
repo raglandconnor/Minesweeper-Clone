@@ -353,7 +353,6 @@ void Board::eventLeaderboard() {
     if (paused) {
         originallyPaused = true;
     }
-    std::cout << "Opening leaderboard..." << std::endl;
     playPauseSprite.setTexture(playTexture);
     if (!originallyPaused) {
         paused_time += clock.getElapsedTime();
@@ -394,7 +393,6 @@ void Board::handleEvents() {
             if (event.mouseButton.button == sf::Mouse::Left) {
                 sf::Vector2i mouse;
                 mouse = sf::Mouse::getPosition(mainWindow);
-                std::cout << "L mouse: (" << mouse.x << ", " << mouse.y << ')' << std::endl;
 
                 // Number tiles
                 eventRevealTilesNum(mouse);
@@ -426,7 +424,6 @@ void Board::handleEvents() {
             if (event.mouseButton.button == sf::Mouse::Right) {
                 sf::Vector2i mouse;
                 mouse = sf::Mouse::getPosition(mainWindow);
-                std::cout << "R mouse: (" << mouse.x << ", " << mouse.y << ')' << std::endl;
 
                 // Place flag
                 eventPlaceFlag(mouse);

@@ -32,7 +32,6 @@ void LeaderboardWindow::initializeText() {
     leaderboardTitleText.setFillColor(sf::Color::White);
 
     leaderboardTitleTextRect = leaderboardTitleText.getLocalBounds();
-    std::cout << rows << " x " << cols << std::endl;
     leaderboardTitleText.setOrigin(leaderboardTitleTextRect.left = leaderboardTitleTextRect.width / 2.0f, leaderboardTitleTextRect.top = leaderboardTitleTextRect.height / 2.0f);
     leaderboardTitleText.setPosition((cols * 16)/2.0f, ((rows * 16) + 50) /2.0f - 120);
 
@@ -67,8 +66,6 @@ void LeaderboardWindow::initializeText() {
     std::string result;
     for (int j = 0; j < 5; j++) {
         std::string stringNum = std::to_string(j + 1);
-        std::cout << "Trying to make final print" << std::endl;
-        std::cout << times[j] << " " << names[j] << std::endl;
 
         result += stringNum + ". \t" + times[j] + "\t" + names[j];
         if (j == newIdx) {
