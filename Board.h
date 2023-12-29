@@ -95,11 +95,13 @@ private:
 
     // Event handler
     void revealRecursive(Tile* tile);
+    void revealNumber(Tile* tile);  // Reveal the 3x3 around a number that the user clicks
     void pauseGame();
     void resetGame();
     void eventDebug();
     void eventPlayPause();
     void eventRevealTiles(sf::Vector2i mouse);
+    void eventRevealTilesNum(sf::Vector2i mouse);
     void eventPlaceFlag(sf::Vector2i mouse);
     void eventLeaderboard();
     void handleEvents();

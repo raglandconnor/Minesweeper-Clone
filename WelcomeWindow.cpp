@@ -75,7 +75,6 @@ void WelcomeWindow::handleEvents() {
                     nameInputString.erase(nameInputString.size() - 1, 1);
                     nameInput.setString(nameInputString + '|');
                     name_count = name_count - 1;
-                    std::cout << "Character " << name_count << ": " << nameInputString << std::endl;
                 } else {
                     name_count = 0;
                 }
@@ -93,7 +92,6 @@ void WelcomeWindow::handleEvents() {
                         }
                     }
                     name_count++;
-                    std::cout << "Character " << name_count << ": " << nameInputString << std::endl;
                 }
             }
         }

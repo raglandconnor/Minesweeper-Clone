@@ -28,7 +28,6 @@ Board::Board(int cols, int rows, int mineCount, std::string username) : mainWind
 }
 
 void Board::run() {
-    printCL();
     while (mainWindow.isOpen()) {
         handleEvents();
         update();
@@ -249,6 +248,14 @@ void Board::revealRecursive(Tile *tile) {
     }
 }
 
+void Board::revealNumber(Tile *tile) {
+    for (int i = 0; i < 8; i++) {
+        if (tile->adjacentTiles[i] != nullptr) {
+            revealRecursive(tile->adjacentTiles[i]);
+        }
+    }
+}
+
 void Board::pauseGame() {
     playPauseSprite.setTexture(playTexture);
     paused_time += clock.getElapsedTime();
@@ -299,6 +306,20 @@ void Board::eventRevealTiles(sf::Vector2i mouse) {
         for (; iter2 != iter1->end(); ++iter2) {
             if (iter2->tileSprite.getGlobalBounds().contains(mainWindow.mapPixelToCoords(mouse)) && !lose && !win && !paused) {
                 revealRecursive(&(*iter2));
+            }
+        }
+    }
+}
+
+void Board::eventRevealTilesNum(sf::Vector2i mouse) {
+    auto iter1 = boardVect.begin();
+    for (; iter1 != boardVect.end(); ++iter1) {
+        auto iter2 = iter1->begin();
+        for (; iter2 != iter1->end(); ++iter2) {
+            if (iter2->tileSprite.getGlobalBounds().contains(mainWindow.mapPixelToCoords(mouse)) && !lose && !win && !paused) {
+                if (iter2->isRevealed && iter2->numAdjacentMines > 0) {
+                    revealNumber(&(*iter2));
+                }
             }
         }
     }
@@ -375,6 +396,9 @@ void Board::handleEvents() {
                 mouse = sf::Mouse::getPosition(mainWindow);
                 std::cout << "L mouse: (" << mouse.x << ", " << mouse.y << ')' << std::endl;
 
+                // Number tiles
+                eventRevealTilesNum(mouse);
+
                 // Tiles
                 eventRevealTiles(mouse);
 
@@ -445,7 +469,7 @@ void Board::updateCounter() {
             counter_3_sprite.setTextureRect(sf::IntRect(21 * i, 0, 21, 32));
         }
     }
-}  // TODO: Make code more concise
+}
 
 void Board::updateTimer() {
     /*
@@ -484,7 +508,7 @@ void Board::updateTimer() {
             timer_4_sprite.setTextureRect(sf::IntRect(21 * i, 0, 21, 32));
         }
     }
-}  // TODO: Make code more concise
+}
 
 void Board::updateLeaderboard(int winningTimeSeconds, std::string winningName) {
     vector<string> times;
