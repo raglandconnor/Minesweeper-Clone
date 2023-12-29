@@ -122,7 +122,7 @@ private:
     void renderMines();
     void render();
 
-    void printCL();
+    void printCL();  // Debug
 };
 
 
