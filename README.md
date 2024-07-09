@@ -24,8 +24,3 @@ g++ -std=c++17 -o Minesweeper main.cpp Board.cpp LeaderboardWindow.cpp TextureMa
 ```
 ./Minesweeper
 ```
-
-## Contact
-
--   [LinkedIn](https://www.linkedin.com/in/raglandconnor/)
--   [raglandconnor.com](https://raglandconnor.com/)
