@@ -1,6 +1,6 @@
 # Minesweeper
 
-### [Read the full project description here](https://www.raglandconnor.com/projects/minesweeper)
+### [Read the full project description here](https://old.raglandconnor.com/projects/minesweeper)
 
 ## Instructions for Running:
 
